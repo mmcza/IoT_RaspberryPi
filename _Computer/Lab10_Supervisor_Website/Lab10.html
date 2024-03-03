@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="/docs/4.0/assets/img/favicons/favicon.ico">
+
+    <title>Sense-HAT Supervisor</title>
+
+    <link rel="canonical" href="https://getbootstrap.com/docs/4.0/examples/starter-template/">
+	<!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <style>
+    body{background-color: #333;color: white;}
+    main{position: relative; top: 10vh;}
+    </style>
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+
+
+    <script>
+      var refresh_data = false;
+      var refresh_counter = 0;
+      var url = "http://raspberrypi.local:8000/Desktop/Sense_hat/read_sensors/Zad5.php";
+        		function read_sensors(){
+            var content;
+            $.get(url, function(data, status){
+            $("main").html('');
+            var new_row = $("<div>",{class:"row", style: "max-width: 100vw"});
+            $.each(data, function(sensorName, sensorData) {
+              var unit;
+                  if (sensorData.unit=='deg')
+                  {
+                    unit='°';
+                  }
+                  else if (sensorData.unit=='C')
+                  {
+                    unit='°C';
+                  }
+                  else
+                  {
+                    unit=sensorData.unit;
+                  }
+              var div = $("<div>", {
+                  id: "s_" + sensorName,
+                  title: sensorName,
+                  class: "col-1",
+                  style: "min-width: 16.666vw; text-align: center",
+                  html: sensorName + ": <br>" + sensorData.val.toFixed(2) + " " + unit + "<br>from sensor:<br>" + sensorData.sensor
+                  });
+                  new_row.append(div);
+                });
+              $("main").append(new_row);
+              refresh_data=true;
+              if (refresh_counter<1)
+              {
+                refresh_counter++;
+                setInterval(refresh_function, 1000);
+              }
+              });
+            };
+
+            function refresh_function(){
+              if (refresh_data)        
+              {$.get(url, function(data, status){
+                $.each(data, function(sensorName, sensorData) {
+                  var unit;
+                  if (sensorData.unit=='deg')
+                  {
+                    unit='°';
+                  }
+                  else if (sensorData.unit=='C')
+                  {
+                    unit='°C';
+                  }
+                  else
+                  {
+                    unit=sensorData.unit;
+                  }
+                  $("#s_"+sensorName).html(sensorName + ": <br>" + sensorData.val.toFixed(2) + " " + unit + "<br>from sensor:<br>" + sensorData.sensor);
+                        });
+                    });
+                  }
+              };
+
+      function set_ledmatrix(){	
+			
+      var url_led = "http://raspberrypi.local:8000/Desktop/Sense_hat/Zad4.php";
+			$.get(url_led, function(led_list, status){
+        $("main").html('');
+				new_main_node = $("<div>");
+				for (var i=0; i < led_list.length; i++) {
+					var x = i%8;
+					var y = Math.floor(i/8);
+
+					if(x==0) 
+						new_row_node = $("<div>", {class:"row", style: "max-width: 100vw; justify-content: center "});
+					
+					
+					var new_node = $("<div>", {"class":"col-1", style: "padding: 5px; max-width: 60px"});
+					r = led_list[i][0];
+					g = led_list[i][1];
+					b = led_list[i][2];
+					rgb_hex_color = "#" + ( 1<<24 | r<<16 | g<<8 | b).toString(16).slice(1);
+					var new_inputnode = $("<input>",{"id":"LED"+i, "type":"color", "value": rgb_hex_color, style: "width: 50px; height: 50px"});
+
+					new_inputnode.change(function(){
+						var id_number = $(this).attr('id').substring(3);
+						var val = $(this).val();
+						var x_id = id_number%8;
+						var y_id = Math.floor(id_number/8);
+						value = parseInt(val.substring(1), 16);
+						val_r = (value & 0xff0000) >> 16;
+						val_g = (value & 0x00ff00) >> 8;
+						val_b = (value & 0x0000ff);
+						var post_data="x="+x_id+"&y="+y_id+"&R="+val_r+"&G="+val_g+"&B="+val_b;
+						// console.log(post_data);
+						$.post(url_led, post_data);
+					});
+
+					new_node.append(new_inputnode);
+
+					new_row_node.append(new_node);
+
+					if(x==7)
+						new_main_node.append(new_row_node);
+
+					$("main").append(new_main_node);
+          refresh_data=false;
+				}
+      });
+    }
+
+    </script>
+  
+  </head>
+
+  <body>	
+    <nav class="navbar navbar-expand-md navbar-dark bg-danger fixed-top">
+      <a class="navbar-brand">Sense-HAT supervisor</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item">
+            <a class="nav-link" onclick="read_sensors()">Sensors</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" onclick="set_ledmatrix()">LED Matrix</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <main role="main" class="main">
+
+    </main>
+  </body>
+</html>
