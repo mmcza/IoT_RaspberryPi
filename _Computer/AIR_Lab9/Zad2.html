@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en-US">
+	<head>
+		<meta charset="utf-8">
+		<title>Lab 9 zad 2</title>
+		<script type="text/javascript" src="jquery-3.4.1.min.js"></script>
+		<script type="text/javascript">
+		$(function(){	
+			
+			var url = "http://192.168.43.136:8000/Desktop/Sense_hat/Zad4.php";
+			$.get(url, function(led_list, status){
+				new_main_node = $("<div>");
+				for (var i=0; i < led_list.length; i++) {
+					//Calculate x and y of RGB LED matrix
+					var x = i%8;
+					var y = Math.floor(i/8);
+
+					// New row at first element in row
+					if(x==0) 
+						new_row_node = $("<div>");
+					
+					new_row_node.append('<div>LED '+ i +' x: ' + x + " y: " + y + '</div>');		
+					for(var k=0; k<3; k++)
+					{
+						var new_node = $("<div>");
+						switch(k) {
+							case 0:
+								var led_color = 'R';
+								break;
+							case 1:
+								var led_color = 'G';
+								break;
+							case 2:
+								var led_color = 'B';
+								break;
+						}
+						var new_inputnode = $("<input>",{"id":"LED"+i+led_color, "type":"range", "min":0, "max":255, 'value': led_list[i][k]});
+						//Extended in comparison to DOM manipulation.html
+						new_inputnode.change(function(){
+						var id = $(this).attr('id');
+						var id_number = id.match(/\d/g).join('');
+						var val_r = $("#LED"+id_number+"R").val();
+						var val_g = $("#LED"+id_number+"G").val();
+						var val_b = $("#LED"+id_number+"B").val();
+						var x_id = id_number%8;
+						var y_id = Math.floor(id_number/8);
+						var post_data="x="+x_id+"&y="+y_id+"&R="+val_r+"&G="+val_g+"&B="+val_b;
+						console.log(post_data);
+						$.post(url, post_data);
+						});
+
+						new_node.append(new_inputnode);
+
+						// Add new node to new row
+						new_row_node.append(new_node);
+
+						// Append new row to main node if it is last in row
+						if(x==7)
+							new_main_node.append(new_row_node);
+					}
+					//$("body").html(new_main_node);
+					$("body").append(new_main_node);
+				}
+			});
+
+			$("#button").click(function(){
+				$.get(url, function(led_list, status){
+					for (var i=0; i < led_list.length; i++)
+					{
+						for(var k=0; k<3; k++)
+						{
+							switch(k) {
+								case 0:
+									var led_color = 'R';
+									break;
+								case 1:
+									var led_color = 'G';
+									break;
+								case 2:
+									var led_color = 'B';
+									break;
+							}
+						$("#LED"+i+led_color).val(led_list[i][k]);
+						}
+					}
+			});
+			});	
+		});
+		</script>
+	</head>
+  <body>
+	<div>
+		<div><input type="button" id="button" value="Get Sense HAT data"></div>
+	</div>
+  </body>
+</html> 
